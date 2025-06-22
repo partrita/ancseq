@@ -1,44 +1,44 @@
 # ancseq
-#### Version 1.2.1
+#### 버전 1.2.1
 
-## Table of contents
-- [What is ancseq?](#what-is-ancseq)
-- [Installation](#installation)
-  + [Dependencies](#dependencies)
-  + [Installation using conda](#installation-using-conda)
-- [Usage](#usage)
-  + [Example 1 : Running ancseq for nucleotide sequence alignment](#example-1--running-ancseq-for-nucleotide-sequence-alignment)
-  + [Example 2 : Running ancseq for amino acid sequence alignment](#example-2--running-ancseq-for-amino-acid-sequence-alignment)
-  + [Example 3 : Running ancseq for codon sequence alignment](#example-3--running-ancseq-for-codon-sequence-alignment)
-  + [Example 4 : Running ancseq specifing outgroup](#example-4--running-ancseq-specifing-outgroup)
-  + [Example 5 : Running ancseq with ```--fast``` option](#example-4--Running-ancseq-with---fast-option)
-- [Outputs](#outputs)
-- [Workflow in ancseq](#workflow-in-ancseq)
-  + [IQ-TREE command 1 : Building a phylogenetic tree](#iq-tree-command-1)
-  + [IQ-TREE command 2 : Reconstructing ancestral sequences](#iq-tree-command-2)
-  + [IQ-TREE command 3 : Reconstructing ancestral inserstions and deletions (INDELs)](#iq-tree-command-3)
-- [How does anceseq calculate codon probabilities in DNA mode?](#How-does-anceseq-calculate-codon-probabilities-in-DNA-mode)
+## 목차
+- [ancseq란?](#ancseq란)
+- [설치](#설치)
+  + [의존성](#의존성)
+  + [conda를 이용한 설치](#conda를-이용한-설치)
+- [사용법](#사용법)
+  + [예제 1 : 뉴클레오타이드 서열 정렬을 위한 ancseq 실행](#예제-1--뉴클레오타이드-서열-정렬을-위한-ancseq-실행)
+  + [예제 2 : 아미노산 서열 정렬을 위한 ancseq 실행](#예제-2--아미노산-서열-정렬을-위한-ancseq-실행)
+  + [예제 3 : 코돈 서열 정렬을 위한 ancseq 실행](#예제-3--코돈-서열-정렬을-위한-ancseq-실행)
+  + [예제 4 : 외부 그룹을 지정하여 ancseq 실행](#예제-4--외부-그룹을-지정하여-ancseq-실행)
+  + [예제 5 : ```--fast``` 옵션으로 ancseq 실행](#예제-5---fast-옵션으로-ancseq-실행)
+- [출력](#출력)
+- [ancseq의 작업 흐름](#ancseq의-작업-흐름)
+  + [IQ-TREE 명령어 1 : 계통수 구축](#iq-tree-명령어-1--계통수-구축)
+  + [IQ-TREE 명령어 2 : 조상 서열 재구축](#iq-tree-명령어-2--조상-서열-재구축)
+  + [IQ-TREE 명령어 3 : 조상 삽입 및 삭제 (INDEL) 재구축](#iq-tree-명령어-3--조상-삽입-및-삭제-indel-재구축)
+- [anceseq는 DNA 모드에서 코돈 확률을 어떻게 계산하나요?](#anceseq는-dna-모드에서-코돈-확률을-어떻게-계산하나요)
 
 
-## What is ancseq?
+## ancseq란?
 <img src="https://github.com/YuSugihara/ancseq/blob/main/images/ancseq_workflow.png" width=400>
 
-Ancestral sequence reconstruction is a technique to reconstruct ancestral states from a multiple sequence alignment. ancseq is a wrapper tool to reconstruct ancestral sequences using [IQ-TREE](http://www.iqtree.org). See more detail workflow in ancseq [here](#Workflow-in-ancseq).
+조상 서열 재구축은 다중 서열 정렬로부터 조상 상태를 재구축하는 기술입니다. ancseq는 [IQ-TREE](http://www.iqtree.org)를 사용하여 조상 서열을 재구축하는 래퍼 도구입니다. ancseq의 자세한 작업 흐름은 [여기](#ancseq의-작업-흐름)에서 확인하세요.
 
-#### Citation
-Sugihara Y, Kourelis J, Contreras MP, Pai H, Harant A. Selvaraj M, Toghani A, Martinez-Anaya C*, Kamoun S* (2025) [Helper NLR immune protein NRC3 evolved to evade inhibition by a cyst nematode virulence effector](https://doi.org/10.1371/journal.pgen.1011653). _PLOS Genetics_, 21:e1011653 *Corresponding authors
+#### 인용
+Sugihara Y, Kourelis J, Contreras MP, Pai H, Harant A. Selvaraj M, Toghani A, Martinez-Anaya C*, Kamoun S* (2025) [Helper NLR immune protein NRC3 evolved to evade inhibition by a cyst nematode virulence effector](https://doi.org/10.1371/journal.pgen.1011653). _PLOS Genetics_, 21:e1011653 *교신 저자
 
 
-## Installation
-### Dependencies
-#### Softwares
+## 설치
+### 의존성
+#### 소프트웨어
 - [IQ-TREE](http://www.iqtree.org)
 
-#### Python (>=3.5) libraries
+#### Python (>=3.5) 라이브러리
 - [biopython](https://biopython.org)
 
-### Installation using conda
-You can install ancseq with the dependencies using [anaconda](https://www.anaconda.com).
+### conda를 이용한 설치
+[anaconda](https://www.anaconda.com)를 사용하여 의존성과 함께 ancseq를 설치할 수 있습니다.
 ```bash
 git clone https://github.com/YuSugihara/ancseq.git
 cd ancseq
@@ -47,56 +47,55 @@ conda activate ancseq
 pip install .
 ```
 
-## Usage
+## 사용법
 
 ```bash
 $ ancseq -h
 usage: ancseq -s <ALIGNED_FASTA> -m <MODE> -o <OUT_DIR> [-t <INT>]
 
-ancseq version 1.2.1
+ancseq 버전 1.2.1
 
-options:
-  -h, --help         show this help message and exit
-  -s , --seq         Sequence alignment in FASTA format.
-  -m , --mode        Sequence type. [DNA/AA/CODON]
-  -o , --out         Output directory. The given name must not exist.
-  -t , --threads     Number of threads. [4]
-  -b , --bootstrap   Replicate for bootstrap. [1000]
-  --max-report       Maximum number of ambiguous sites to report at the same position. [5]
-  --min-prob         Minimum probability of being reported as an ambiguous site. [0.05]
-  --min-gap-prob     Minimum probability of replacing the ancestral state with a gap. [0.5]
-  --fast             Use -fast option in IQ-TREE [FLASE]
-  --model            Specify substitution model for IQ-TREE. IQ-TREE searches the best substitution
-                     model using ModelFinder in default [MFP]
-  --outgroup         Specify outgroup for IQ-TREE. [None]
-  --stop-codon-prob  Stop calculation of codon probabilities in DNA mode [FLASE]
-  --asr-only         Skip building tree and reconstruct ancestral states only [FLASE]
-  -v, --version      show program's version number and exit
+옵션:
+  -h, --help         이 도움말 메시지를 표시하고 종료합니다.
+  -s , --seq         FASTA 형식의 서열 정렬 파일.
+  -m , --mode        서열 유형. [DNA/AA/CODON]
+  -o , --out         출력 디렉토리. 지정된 이름은 존재하지 않아야 합니다.
+  -t , --threads     스레드 수. [4]
+  -b , --bootstrap   부트스트랩 반복 횟수. [1000]
+  --max-report       동일 위치에서 보고할 모호한 사이트의 최대 수. [5]
+  --min-prob         모호한 사이트로 보고될 최소 확률. [0.05]
+  --min-gap-prob     조상 상태를 갭으로 대체할 최소 확률. [0.5]
+  --fast             IQ-TREE에서 -fast 옵션 사용 [FALSE]
+  --model            IQ-TREE의 치환 모델 지정. 기본적으로 IQ-TREE는 ModelFinder를 사용하여 최적의 치환 모델을 검색합니다 [MFP]
+  --outgroup         IQ-TREE의 외부 그룹 지정. [None]
+  --stop-codon-prob  DNA 모드에서 코돈 확률 계산 중지 [FALSE]
+  --asr-only         계통수 구축을 건너뛰고 조상 상태만 재구축 [FALSE]
+  -v, --version      프로그램 버전 번호를 표시하고 종료합니다.
 ```
 
-**We recommend to specify the outgroup to avoid misinterpretation of the ancestral states of nodes. See more detail [here](#Example-4--Running-ancseq-specifing-outgroup).**
+**노드의 조상 상태에 대한 오해를 피하기 위해 외부 그룹을 지정하는 것이 좋습니다. 자세한 내용은 [여기](#예제-4--외부-그룹을-지정하여-ancseq-실행)를 참조하십시오.**
 
-+ [Example 1 : Running ancseq for nucleotide sequence alignment](#example-1--running-ancseq-for-nucleotide-sequence-alignment)
-+ [Example 2 : Running ancseq for amino acid sequence alignment](#example-2--running-ancseq-for-amino-acid-sequence-alignment)
-+ [Example 3 : Running ancseq for codon sequence alignment](#example-3--running-ancseq-for-codon-sequence-alignment)
-+ [Example 4 : Running ancseq specifing outgroup](#example-4--running-ancseq-specifing-outgroup)
-+ [Example 5 : Running ancseq with ```--fast``` option](#example-5--running-ancseq-with---fast-option)
++ [예제 1 : 뉴클레오타이드 서열 정렬을 위한 ancseq 실행](#예제-1--뉴클레오타이드-서열-정렬을-위한-ancseq-실행)
++ [예제 2 : 아미노산 서열 정렬을 위한 ancseq 실행](#예제-2--아미노산-서열-정렬을-위한-ancseq-실행)
++ [예제 3 : 코돈 서열 정렬을 위한 ancseq 실행](#예제-3--코돈-서열-정렬을-위한-ancseq-실행)
++ [예제 4 : 외부 그룹을 지정하여 ancseq 실행](#예제-4--외부-그룹을-지정하여-ancseq-실행)
++ [예제 5 : ```--fast``` 옵션으로 ancseq 실행](#예제-5---fast-옵션으로-ancseq-실행)
 
 
-### Example 1 : Running ancseq for nucleotide sequence alignment
+### 예제 1 : 뉴클레오타이드 서열 정렬을 위한 ancseq 실행
 ```
 ancseq -s test_nuc.fasta \
        -m DNA \
        -o out_dir
 ```
 
-`-s` : Nucleotide sequence alignment in fasta format.
+`-s` : FASTA 형식의 뉴클레오타이드 서열 정렬.
 
-`-m` : Sequence type.
+`-m` : 서열 유형.
 
-`-o` : Name of the output directory. The given name should not exist.
+`-o` : 출력 디렉토리 이름. 지정된 이름은 존재하지 않아야 합니다.
 
-### Example 2 : Running ancseq for amino acid sequence alignment
+### 예제 2 : 아미노산 서열 정렬을 위한 ancseq 실행
 
 ```bash
 ancseq -s test_nuc.fasta \
@@ -104,15 +103,15 @@ ancseq -s test_nuc.fasta \
        -o out_dir
 ```
 
-`-s` : Amino acid sequence alignment in fasta format.
+`-s` : FASTA 형식의 아미노산 서열 정렬.
 
-`-m` : Sequence type.
+`-m` : 서열 유형.
 
-`-o` : Name of the output directory. The given name should not exist.
+`-o` : 출력 디렉토리 이름. 지정된 이름은 존재하지 않아야 합니다.
 
-### Example 3 : Running ancseq for codon sequence alignment
+### 예제 3 : 코돈 서열 정렬을 위한 ancseq 실행
 
-**!!!WARNING!!!** IQ-TREE implements codon substitution models. However, it might take too long to build phylogenetic tree, depending on the alignment you input. In that case, we would recommend running ancseq in DNA mode. anceseq can calculate the probabilities of each codon in DNA mode.
+**!!!경고!!!** IQ-TREE는 코돈 치환 모델을 구현합니다. 그러나 입력한 정렬에 따라 계통수를 구축하는 데 너무 오래 걸릴 수 있습니다. 이 경우 DNA 모드에서 ancseq를 실행하는 것이 좋습니다. anceseq는 DNA 모드에서 각 코돈의 확률을 계산할 수 있습니다.
 
 ```bash
 ancseq -s test_codon.fasta \
@@ -120,15 +119,15 @@ ancseq -s test_codon.fasta \
        -o out_dir
 ```
 
-`-s` : Codon sequence alignment in fasta format.
+`-s` : FASTA 형식의 코돈 서열 정렬.
 
-`-m` : Sequence type.
+`-m` : 서열 유형.
 
-`-o` : Name of the output directory. The given name should not exist.
+`-o` : 출력 디렉토리 이름. 지정된 이름은 존재하지 않아야 합니다.
 
-### Example 4 : Running ancseq specifing outgroup
+### 예제 4 : 외부 그룹을 지정하여 ancseq 실행
 
-You can reconstruct the ancestral states without specifying the outgroup. However, the ancestral states of the node may be misinterpreted when you visualize the tree. Therefore, we recommend to specify the outgroup to avoid misinterpretation of ancestral states of the node. IQ-TREE converts the rooted tree to the unrooted tree in defalt.
+외부 그룹을 지정하지 않고 조상 상태를 재구축할 수 있습니다. 그러나 트리를 시각화할 때 노드의 조상 상태가 잘못 해석될 수 있습니다. 따라서 노드의 조상 상태에 대한 오해를 피하기 위해 외부 그룹을 지정하는 것이 좋습니다. IQ-TREE는 기본적으로 뿌리 있는 트리를 뿌리 없는 트리로 변환합니다.
 
 ```
 ancseq -s test_nuc.fasta \
@@ -137,15 +136,15 @@ ancseq -s test_nuc.fasta \
        -o out_dir
 ```
 
-`-s` : Nucleotide sequence alignment in fasta format.
+`-s` : FASTA 형식의 뉴클레오타이드 서열 정렬.
 
-`-m` : Sequence type.
+`-m` : 서열 유형.
 
-`--outgroup` : Sequence ID of outgroup.
+`--outgroup` : 외부 그룹의 서열 ID.
 
-`-o` : Name of the output directory. The given name should not exist.
+`-o` : 출력 디렉토리 이름. 지정된 이름은 존재하지 않아야 합니다.
 
-### Example 5 : Running ancseq with ```--fast``` option
+### 예제 5 : ```--fast``` 옵션으로 ancseq 실행
 
 ```bash
 ancseq -s test_nuc.fasta \
@@ -154,17 +153,17 @@ ancseq -s test_nuc.fasta \
        --fast
 ```
 
-`-s` : Nucleotide sequence alignment in fasta format.
+`-s` : FASTA 형식의 뉴클레오타이드 서열 정렬.
 
-`-m` : Sequence type.
+`-m` : 서열 유형.
 
-`-o` : Name of the output directory. The given name should not exist.
+`-o` : 출력 디렉토리 이름. 지정된 이름은 존재하지 않아야 합니다.
 
-`--fast` : Use ```-fast``` option in IQ-TREE.
+`--fast` : IQ-TREE에서 ```-fast``` 옵션을 사용합니다.
 
 
-## Outputs
-Inside of `OUT_DIR` is like below.
+## 출력
+`OUT_DIR` 내부는 다음과 같습니다.
 ```
 ├── 00_tree
 │  ├── 00_iqtree.err
@@ -205,22 +204,22 @@ Inside of `OUT_DIR` is like below.
    ├── ancestral_state_result.tsv.gz
    └── ancestral_state_result.codon_prob.tsv.gz
 ```
-- The phylogenetic tree reconstructed by IQ-TREE can be found in `00_tree`.
-- The results of the ancestral sequence reconstruction can be found in `30_result`.
-  + `ancestral_state_result.treefile`: Phylogenetic tree with the node labels.
-  + `ancestral_state_result.fasta`: FASTA file of the ancestral sequences without gaps.
-  + `ancestral_state_result_with_gap.fasta`: FASTA file of the ancestral sequences with gaps.
-  + `ancestral_state_result.sort.tsv` : Probabilities of the ancestral states. 
+- IQ-TREE로 재구축된 계통수는 `00_tree`에서 찾을 수 있습니다.
+- 조상 서열 재구축 결과는 `30_result`에서 찾을 수 있습니다.
+  + `ancestral_state_result.treefile`: 노드 레이블이 있는 계통수.
+  + `ancestral_state_result.fasta`: 갭이 없는 조상 서열의 FASTA 파일.
+  + `ancestral_state_result_with_gap.fasta`: 갭이 있는 조상 서열의 FASTA 파일.
+  + `ancestral_state_result.sort.tsv` : 조상 상태의 확률.
 
-## Workflow in ancseq
+## ancseq의 작업 흐름
 
 <img src="https://github.com/YuSugihara/ancseq/blob/main/images/ancseq_workflow.png" width=400>
 
-- [IQ-TREE command 1](#iq-tree-command-1) : Building a phylogenetic tree.
-- [IQ-TREE command 2](#iq-tree-command-2) : Reconstructing ancestral sequences.
-- [IQ-TREE command 3](#iq-tree-command-3) : Reconstructing inserstions and deletions (INDELs).
+- [IQ-TREE 명령어 1](#iq-tree-명령어-1) : 계통수 구축.
+- [IQ-TREE 명령어 2](#iq-tree-명령어-2) : 조상 서열 재구축.
+- [IQ-TREE 명령어 3](#iq-tree-명령어-3) : 삽입 및 삭제 (INDEL) 재구축.
 
-### IQ-TREE command 1
+### IQ-TREE 명령어 1 : 계통수 구축
 
 ```bash
 iqtree -s ${INPUT_FASTA} \
@@ -232,17 +231,17 @@ iqtree -s ${INPUT_FASTA} \
        2> /OUT_DIR/00_tree/00_iqtree.err
 ```
 
-`-s` : Sequence alignment in fasta format.
+`-s` : FASTA 형식의 서열 정렬.
 
-`-st` : Sequence type.
+`-st` : 서열 유형.
 
-`-T` : Number of threads.
+`-T` : 스레드 수.
 
-`-B` : Replicates for ultrafast bootstrap.
+`-B` : 초고속 부트스트랩 반복 횟수.
 
-`-m MFP` : Extended model selection followed by tree inference.
+`-m MFP` : 확장된 모델 선택 후 트리 추론.
 
-If you specify the ```--fast``` option in ancseq, the IQ-TREE command 1 will change as follows.
+ancseq에서 ```--fast``` 옵션을 지정하면 IQ-TREE 명령어 1은 다음과 같이 변경됩니다.
 
 ```bash
 iqtree -s ${INPUT_FASTA} \
@@ -255,19 +254,19 @@ iqtree -s ${INPUT_FASTA} \
        2> /OUT_DIR/00_tree/00_iqtree.err
 ```
 
-`-s` : Sequence alignment in fasta format.
+`-s` : FASTA 형식의 서열 정렬.
 
-`-st` : Sequence type.
+`-st` : 서열 유형.
 
-`-T` : Number of threads.
+`-T` : 스레드 수.
 
-`--alrt` : Replicates for SH approximate likelihood ratio test.
+`--alrt` : SH 근사 우도비 검정 반복 횟수.
 
-`-m MFP` : Extended model selection followed by tree inference.
+`-m MFP` : 확장된 모델 선택 후 트리 추론.
 
-`--fast` : Fast search to resemble FastTree.
+`--fast` : FastTree와 유사한 빠른 검색.
 
-### IQ-TREE command 2
+### IQ-TREE 명령어 2 : 조상 서열 재구축
 
 ```bash
 iqtree -asr \
@@ -282,24 +281,24 @@ iqtree -asr \
        2> /OUT_DIR/10_asr/10_iqtree.err
 ```
 
-`-asr` : Ancestral state reconstruction by empirical Bayes.
+`-asr` : 경험적 베이즈에 의한 조상 상태 재구축.
 
-`-s` : Sequence alignment in fasta format.
+`-s` : FASTA 형식의 서열 정렬.
 
-`-te` : Tree file.
+`-te` : 트리 파일.
 
-`-st` : Sequence type.
+`-st` : 서열 유형.
 
-`-T` : Number of threads.
+`-T` : 스레드 수.
 
-`-m` : Model name.
+`-m` : 모델 이름.
 
-`-o` : Sequence ID of the outgroup if you specify the outgroup with `--outgroup`.
+`-o` : `--outgroup`으로 외부 그룹을 지정한 경우 외부 그룹의 서열 ID.
 
-`-keep_empty_seq` : Keep empty sequences in the alignment.
+`-keep_empty_seq` : 정렬에서 빈 서열 유지.
 
 
-### IQ-TREE command 3
+### IQ-TREE 명령어 3 : 조상 삽입 및 삭제 (INDEL) 재구축
 
 ```bash
 iqtree -asr \
@@ -315,32 +314,32 @@ iqtree -asr \
        2> /OUT_DIR/20_indels/20_iqtree.err
 ```
 
-`-asr` : Ancestral state reconstruction by empirical Bayes.
+`-asr` : 경험적 베이즈에 의한 조상 상태 재구축.
 
-`-s` : Sequence alignment in fasta format.
+`-s` : FASTA 형식의 서열 정렬.
 
-`-te` : Tree file.
+`-te` : 트리 파일.
 
-`-st BIN` : Binary sequence type.
+`-st BIN` : 이진 서열 유형.
 
-`-T` : Number of threads.
+`-T` : 스레드 수.
 
-`-blfix` : Fix branch lengths of tree passed via `-t` or `-te`.
+`-blfix` : `-t` 또는 `-te`를 통해 전달된 트리의 분기 길이 고정.
 
-`-m JC2` : Jukes-Cantor type binary model.
+`-m JC2` : Jukes-Cantor 유형 이진 모델.
 
-`-o` : Sequence ID of the outgroup if you specify the outgroup with `--outgroup`.
+`-o` : `--outgroup`으로 외부 그룹을 지정한 경우 외부 그룹의 서열 ID.
 
-`-keep_empty_seq` : Keep empty sequences in the alignment.
+`-keep_empty_seq` : 정렬에서 빈 서열 유지.
 
-#### References
+#### 참고문헌
 
 1. Aadland K, Pugh C, Kolaczkowski B. 2019. High-Throughput Reconstruction of Ancestral Protein Sequence, Structure, and Molecular Function. In: Sikosek T ed. Computational Methods in Protein Evolution. Methods in Molecular Biology. New York, NY: Springer, 135–170. DOI: [10.1007/978-1-4939-8736-8_8](https://doi.org/10.1007/978-1-4939-8736-8_8).
 
 2. VanAntwerp J, Finneran P, Dolgikh B, Woldring D. 2022. Ancestral Sequence Reconstruction and Alternate Amino Acid States Guide Protein Library Design for Directed Evolution. In: Traxlmayr MW ed. Yeast Surface Display. Methods in Molecular Biology. New York, NY: Springer US, 75–86. DOI: [10.1007/978-1-0716-2285-8_4](https://doi.org/10.1007/978-1-0716-2285-8_4).
 
-## How does anceseq calculate codon probabilities in DNA mode?
+## anceseq는 DNA 모드에서 코돈 확률을 어떻게 계산하나요?
 
-IQ-TREE implements codon substitution models. However, it might take too long to build phylogenetic tree, depending on the alignment you input. Therefore, we implemented a function to calculate the probabilities of each codon by simply multiplying the probabilities of each nucleotide. For example, a probability of methionine at the $j$ th position, $P_{j, M}$, can be calculated by multiplying a probability of A at the 1st nucleotide of the $j$ th codon, $p_{j_{1}, A}$, that of T at the 2nd nucleotide, $p_{j_{2}, T}$, and that of G at the 3rd nucleotide, $p_{j_{3}, G}$ like below.
+IQ-TREE는 코돈 치환 모델을 구현합니다. 그러나 입력한 정렬에 따라 계통수를 구축하는 데 너무 오래 걸릴 수 있습니다. 따라서 각 뉴클레오타이드의 확률을 단순히 곱하여 각 코돈의 확률을 계산하는 함수를 구현했습니다. 예를 들어, $j$번째 위치에서 메티오닌의 확률 $P_{j, M}$은 $j$번째 코돈의 첫 번째 뉴클레오타이드 A의 확률 $p_{j_{1}, A}$, 두 번째 뉴클레오타이드 T의 확률 $p_{j_{2}, T}$, 세 번째 뉴클레오타이드 G의 확률 $p_{j_{3}, G}$를 곱하여 다음과 같이 계산할 수 있습니다.
 
 $P_{j, M} = p_{j_{1}, A} * p_{j_{2}, T} * p_{j_{3}, G}$
