@@ -1,0 +1,20 @@
+[project]
+name = "ancseq"
+version = "0.1.0"  # You might want to update this from setup.py or other sources
+description = "Ancestral sequence reconstruction using IQ-TREE" # Add a project description
+authors = ["Your Name <you@example.com>"] # Replace with actual author info
+channels = ["conda-forge", "bioconda", "anaconda", "defaults"]
+platforms = ["linux-64", "osx-64", "win-64"] # Add or remove platforms as needed
+
+[tasks]
+# Define tasks, e.g., for running tests or building the project
+# Example: test = "pytest"
+# Example: run = "python ancseq/ancseq.py"
+test = "sh test/test.sh"
+run = "python ancseq/ancseq.py"
+
+
+[dependencies]
+iqtree = "==2.3.6"
+biopython = "==1.85"
+python = ">=3.8" # Assuming a minimum Python version, adjust as needed

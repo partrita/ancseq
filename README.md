@@ -37,17 +37,66 @@ Sugihara Y, Kourelis J, Contreras MP, Pai H, Harant A. Selvaraj M, Toghani A, Ma
 #### Python (>=3.5) 라이브러리
 - [biopython](https://biopython.org)
 
-### conda를 이용한 설치
-[anaconda](https://www.anaconda.com)를 사용하여 의존성과 함께 ancseq를 설치할 수 있습니다.
-```bash
-git clone https://github.com/YuSugihara/ancseq.git
-cd ancseq
-conda env create -f ancseq.yml
-conda activate ancseq
-pip install .
-```
+### Pixi를 이용한 설치
+[Pixi](https://pixi.sh/)를 사용하여 의존성과 함께 ancseq를 설치할 수 있습니다.
+
+**1. Pixi 설치:**
+
+   Pixi 공식 웹사이트의 [설치 안내](https://pixi.sh/latest/#installation)를 따르세요.
+
+**2. 저장소 복제 및 환경 활성화:**
+
+   ```bash
+   git clone https://github.com/YuSugihara/ancseq.git
+   cd ancseq
+   ```
+
+   `cd ancseq` 디렉토리로 이동하면 Pixi가 자동으로 `pixi.toml` 파일을 감지하고 환경을 설정하려고 시도합니다. 만약 자동으로 활성화되지 않거나, 의존성을 설치해야 하는 경우 다음 명령어를 사용하세요:
+
+   ```bash
+   pixi install
+   ```
+
+   이 명령어는 `pixi.toml`에 정의된 의존성을 설치합니다.
+
+**3. ancseq 설치 (Editable mode):**
+
+   Pixi 환경 내에서 프로젝트를 개발하거나 직접 실행하려면 editable mode로 설치하는 것이 좋습니다.
+
+   ```bash
+   pixi run pip install -e .
+   ```
+   또는 `setup.py`가 프로젝트 루트에 있다면 간단히:
+   ```bash
+   pixi run pip install .
+   ```
+
+   이제 `ancseq` 명령어를 Pixi 환경에서 사용할 수 있습니다.
 
 ## 사용법
+
+Pixi 환경에서 ancseq를 실행하려면 `pixi run` 접두사를 사용하거나 `pixi shell`을 사용하여 Pixi 환경으로 진입한 후 명령어를 실행할 수 있습니다.
+
+**`pixi run` 사용 예시:**
+```bash
+pixi run ancseq -h
+```
+
+**`pixi shell` 사용 예시:**
+```bash
+pixi shell
+(ancseq-dev) $ ancseq -h
+(ancseq-dev) $ exit
+```
+
+기존 사용법 예제들은 `ancseq` 명령어 앞에 `pixi run`을 붙이거나 `pixi shell` 내부에서 실행하면 동일하게 작동합니다. 예를 들어:
+
+```bash
+# 예제 1: 뉴클레오타이드 서열 정렬을 위한 ancseq 실행 (pixi run 사용)
+pixi run ancseq -s test_nuc.fasta \
+       -m DNA \
+       -o out_dir
+```
 
 ```bash
 $ ancseq -h
