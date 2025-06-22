@@ -11,9 +11,9 @@ def clean_cmd(cmd):
 
 def call_log(name, cmd):
     print(time_stamp(), 
-          '!!ERROR!! {}\n'.format(cmd), 
+          '!!오류!! {}\n'.format(cmd),
           flush=True)
-    print('please check below:\n')
+    print('아래를 확인하십시오:\n')
     with open(name) as log:
         for line in log:
             print(line, end='')

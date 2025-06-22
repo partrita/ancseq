@@ -19,24 +19,24 @@ class Params(object):
         return args
 
     def ancseq_options(self):
-        parser = argparse.ArgumentParser(description='ancseq version {}'.format(__version__),
+        parser = argparse.ArgumentParser(description='ancseq 버전 {}'.format(__version__),
                                          formatter_class=argparse.RawTextHelpFormatter)
-        parser.usage = 'ancseq -s <ALIGNED_FASTA> -m <MODE> -o <OUT_DIR> [-t <INT>]'
+        parser.usage = 'ancseq -s <정렬된_FASTA> -m <모드> -o <출력_디렉토리> [-t <정수>]'
 
-        # set options
+        # 옵션 설정
         parser.add_argument('-s',
                             '--seq',
                             action='store',
                             required=True,
                             type=str,
-                            help='Sequence alignment in FASTA format.',
+                            help='FASTA 형식의 서열 정렬 파일.',
                             metavar='')
 
         parser.add_argument('-m',
                             '--mode',
                             required=True,
                             type=str,
-                            help='Sequence type. [DNA/AA/CODON]',
+                            help='서열 유형. [DNA/AA/CODON]',
                             choices=['DNA','AA', 'CODON'],
                             metavar='')
 
@@ -45,7 +45,7 @@ class Params(object):
                             action='store',
                             required=True,
                             type=str,
-                            help='Output directory. The given name must not exist.',
+                            help='출력 디렉토리. 지정된 이름은 존재하지 않아야 합니다.',
                             metavar='')
 
         parser.add_argument('-t',
@@ -53,7 +53,7 @@ class Params(object):
                             action='store',
                             default=4,
                             type=int,
-                            help='Number of threads. [4]',
+                            help='스레드 수. [4]',
                             metavar='')
         
         parser.add_argument('-b',
@@ -61,57 +61,57 @@ class Params(object):
                             action='store',
                             default=1000,
                             type=int,
-                            help='Replicate for bootstrap. [1000]',
+                            help='부트스트랩 반복 횟수. [1000]',
                             metavar='')
         
         parser.add_argument('--max-report',
                             action='store',
                             default=5,
                             type=int,
-                            help='Maximum number of ambiguous sites to report at the same position. [5]',
+                            help='동일 위치에서 보고할 모호한 사이트의 최대 수. [5]',
                             metavar='')
         
         parser.add_argument('--min-prob',
                             action='store',
                             default=0.05,
                             type=float,
-                            help='Minimum probability of being reported as an ambiguous site. [0.05]',
+                            help='모호한 사이트로 보고될 최소 확률. [0.05]',
                             metavar='')
         
         parser.add_argument('--min-gap-prob',
                             action='store',
                             default=0.5,
                             type=float,
-                            help='Minimum probability of replacing the ancestral state with a gap. [0.5]',
+                            help='조상 상태를 갭으로 대체할 최소 확률. [0.5]',
                             metavar='')
         
         parser.add_argument('--fast',
                             action='store_true',
-                            help='Use -fast option in IQ-TREE [FLASE]')
+                            help='IQ-TREE에서 -fast 옵션 사용 [FALSE]')
         
         parser.add_argument('--model',
                             action='store',
                             default='MFP',
                             type=str,
-                            help='Specify substitution model for IQ-TREE. IQ-TREE searches the best substitution\nmodel using ModelFinder in default [MFP]',
+                            help='IQ-TREE의 치환 모델 지정. 기본적으로 IQ-TREE는 ModelFinder를 사용하여 최적의 치환 모델을 검색합니다 [MFP]',
                             metavar='')
 
         parser.add_argument('--outgroup',
                             action='store',
                             default=None,
                             type=str,
-                            help='Specify outgroup for IQ-TREE. [None]',
+                            help='IQ-TREE의 외부 그룹 지정. [None]',
                             metavar='')
         
         parser.add_argument('--stop-codon-prob',
                             action='store_true',
-                            help='Stop calculation of codon probabilities in DNA mode [FLASE]')
+                            help='DNA 모드에서 코돈 확률 계산 중지 [FALSE]')
         
         parser.add_argument('--asr-only',
                             action='store_true',
-                            help='Skip building tree and reconstruct ancestral states only [FLASE]')
+                            help='계통수 구축을 건너뛰고 조상 상태만 재구축 [FALSE]')
 
-        # set version
+        # 버전 설정
         parser.add_argument('-v',
                             '--version',
                             action='version',

@@ -23,7 +23,7 @@ class ancseq(object):
 
     def built_tree(self):
         print(time_stamp(),
-              'Building tree by IQ-TREE...',
+              'IQ-TREE로 계통수 구축 중...',
               flush=True)
         out_dir_00 = os.path.join(self.args.out, '00_tree')
         seq = os.path.join(out_dir_00, os.path.basename(self.args.seq))
@@ -53,22 +53,22 @@ class ancseq(object):
             call_log(f'{out_dir_00}/00_iqtree.err', cmd)
             sys.exit(1)
         print(time_stamp(),
-              'IQ-TREE successfully finished.',
+              'IQ-TREE 작업이 성공적으로 완료되었습니다.',
               flush=True)
         
     def check_best_model(self):
         iqtree_log = os.path.join(self.args.out, '00_tree', f'{os.path.basename(self.args.seq)}.log')
         with open(iqtree_log) as log:
             for line in log:
-                if line.startswith('Best-fit model:'):
+                if line.startswith('Best-fit model:'): # 원본 로그 파일 형식 유지
                     self.args.model = line.split()[2]
                     print(time_stamp(),
-                        f'The best model in IQ-TREE was {self.args.model}.',
+                        f'IQ-TREE에서 최적 모델은 {self.args.model} 입니다.',
                         flush=True)
     
     def reconstruct_ancestral_state(self):
         print(time_stamp(),
-              'Reconstructing ancestral state...',
+              '조상 상태 재구축 중...',
               flush=True)
         out_dir_10 = os.path.join(self.args.out, '10_asr')
         seq = os.path.join(out_dir_10, os.path.basename(self.args.seq))
@@ -97,55 +97,54 @@ class ancseq(object):
             call_log(f'{out_dir_10}/10_iqtree.err', cmd)
             sys.exit(1)        
         print(time_stamp(),
-              'Ancestral sequence reconstruction successfully finished.',
+              '조상 서열 재구축이 성공적으로 완료되었습니다.',
               flush=True)
     
     def alignment_to_binary(self):
-        fasta_file = open(self.args.seq)
         self.binary_file_name = os.path.join(self.args.out, '20_indels', f'{os.path.basename(self.args.seq)}.binary')
-        binary_file = open(self.binary_file_name, 'w')
-        for header, seq in SimpleFastaParser(fasta_file):
-            bin_seq = ''
-            dna_missing_chars = ['N', 'X', '?', '.', 'O', '~', '!']
-            aa_missing_chars = ['X', '?', '.', '~', '!']
-            if self.args.mode == 'CODON':
-                for i in range(0, len(seq), 3):
-                    if seq[i:i+3] == '---':
-                        bin_seq += '1'
-                    elif seq[i] in dna_missing_chars or seq[i+1] in dna_missing_chars or seq[i+2] in dna_missing_chars:
-                        bin_seq += '-'
-                    else:
-                        bin_seq += '0'
-            elif self.args.mode == 'DNA':
-                for i in range(len(seq)):
-                    if seq[i] == '-':
-                        bin_seq += '1'
-                    elif seq[i] in dna_missing_chars:
-                        bin_seq += '-'
-                    else:
-                        bin_seq += '0'
-            elif self.args.mode == 'AA':
-                for i in range(len(seq)):
-                    if seq[i] == '-':
-                        bin_seq += '1'
-                    elif seq[i] in aa_missing_chars:
-                        bin_seq += '-'
-                    else:
-                        bin_seq += '0'
-            else:
-                print(time_stamp(),
-                      f'Invalid mode {self.args.mode} was given.',
-                      file=sys.stderr,
-                      flush=True)
-                sys.exit(1)
-            binary_file.write(f'>{header}\n')
-            binary_file.write(f'{bin_seq}\n')
-        fasta_file.close()
-        binary_file.close()
+        dna_missing_chars = {'N', 'X', '?', '.', 'O', '~', '!'}  # 집합으로 변경하여 검색 성능 향상
+        aa_missing_chars = {'X', '?', '.', '~', '!'} # 집합으로 변경하여 검색 성능 향상
+
+        with open(self.args.seq) as fasta_file, open(self.binary_file_name, 'w') as binary_file:
+            for header, seq in SimpleFastaParser(fasta_file):
+                bin_seq = []  # 문자열 이어붙이기 대신 리스트 사용 후 join
+                if self.args.mode == 'CODON':
+                    for i in range(0, len(seq), 3):
+                        codon = seq[i:i+3]
+                        if codon == '---':
+                            bin_seq.append('1')
+                        elif any(c in dna_missing_chars for c in codon): # any와 생성기 표현식 사용
+                            bin_seq.append('-')
+                        else:
+                            bin_seq.append('0')
+                elif self.args.mode == 'DNA':
+                    for char_seq in seq:
+                        if char_seq == '-':
+                            bin_seq.append('1')
+                        elif char_seq in dna_missing_chars:
+                            bin_seq.append('-')
+                        else:
+                            bin_seq.append('0')
+                elif self.args.mode == 'AA':
+                    for char_seq in seq:
+                        if char_seq == '-':
+                            bin_seq.append('1')
+                        elif char_seq in aa_missing_chars:
+                            bin_seq.append('-')
+                        else:
+                            bin_seq.append('0')
+                else:
+                    print(time_stamp(),
+                          f'잘못된 모드 {self.args.mode}가 주어졌습니다.',
+                          file=sys.stderr,
+                          flush=True)
+                    sys.exit(1)
+                binary_file.write(f'>{header}\n')
+                binary_file.write(''.join(bin_seq) + '\n')
         
     def reconstruct_indels(self):
         print(time_stamp(),
-              'Reconstructing INDELs...',
+              'INDEL 재구축 중...',
               flush=True)
         out_dir_20 = os.path.join(self.args.out, '20_indels')
         tree = os.path.join(self.args.out, '00_tree', f'{os.path.basename(self.args.seq)}.treefile')
@@ -174,178 +173,261 @@ class ancseq(object):
             call_log(f'{out_dir_20}/20_iqtree.err', cmd)
             sys.exit(1)        
         print(time_stamp(),
-              'INDEL reconstruction successfully finished.',
+              'INDEL 재구축이 성공적으로 완료되었습니다.',
               flush=True)
 
     def merge_results(self):
         out_dir_30 = os.path.join(self.args.out, '30_result')
-        os.mkdir(out_dir_30)
-        probs_result_10 = open(os.path.join(self.args.out, '10_asr', f'{os.path.basename(self.args.seq)}.state'))
-        probs_result_20 = open(os.path.join(self.args.out, '20_indels', f'{os.path.basename(self.args.seq)}.binary.state'))
-        merged = open(f'{out_dir_30}/ancestral_state_result.tsv', 'w')
-        fasta_with_gap = open(f'{out_dir_30}/ancestral_state_result_with_gap.fasta', 'w')
-        fasta = open(f'{out_dir_30}/ancestral_state_result.fasta', 'w')
-        if self.args.mode == 'CODON':
-            gap = '---'
-        else:
-            gap = '-'
-        for line_10, line_20 in zip(probs_result_10, probs_result_20):
-            if not line_10.startswith('#'):
-                line_10 = line_10.rstrip('\n')
-                cols_10 = line_10.split('\t')
-                if not line_10.startswith('Node\tSite'):
-                    line_20 = line_20.rstrip('\n')
-                    cols_20 = line_20.split('\t')
-                    node_10 = cols_10[0]
-                    node_20 = cols_20[0]
-                    site_10 = cols_10[1]
-                    site_20 = cols_20[1]
-                    state = cols_10[2]
-                    probs = [float(p) for p in cols_10[3:]]
-                    p_0 = float(cols_20[3])
-                    p_1 = float(cols_20[4])
-                    if (node_10, site_10) == (node_20, site_20):
-                        if previous_node != node_10 and previous_node != None:
-                            fasta_with_gap.write(f'>{previous_node}\n')
-                            fasta_with_gap.write(f'{node_seq}\n')
-                            fasta.write(f'>{previous_node}\n')
-                            fasta.write('{}\n'.format(node_seq.replace('-', '')))
-                            node_seq = ''
-                        if p_1 > self.args.min_gap_prob:
-                            merged.write('{}\t{}\t{}\t{}\t{:.4f}\n'.format(node_10, site_10, gap, '\t'.join([format(round(prob, 4), '.5f') for prob in probs]), p_1))
-                            node_seq = node_seq + gap
-                        else:
-                            merged.write('{}\t{}\t{}\t{}\t{:.4f}\n'.format(node_10, site_10, state, '\t'.join([format(round(prob, 4), '.5f') for prob in probs]), p_1))
-                            node_seq = node_seq + state
-                        previous_node = node_10
-                    else:
-                        print(line_10)
-                        print(line_20)
-                        print(time_stamp(), f'{probs_result_10} and {probs_result_20} did not much.', file=sys.stderr, flush=True)
+        os.makedirs(out_dir_30, exist_ok=True)
+
+        path_probs_result_10 = os.path.join(self.args.out, '10_asr', f'{os.path.basename(self.args.seq)}.state')
+        path_probs_result_20 = os.path.join(self.args.out, '20_indels', f'{os.path.basename(self.args.seq)}.binary.state')
+        path_merged = f'{out_dir_30}/ancestral_state_result.tsv'
+        path_fasta_with_gap = f'{out_dir_30}/ancestral_state_result_with_gap.fasta'
+        path_fasta = f'{out_dir_30}/ancestral_state_result.fasta'
+
+        gap_char = '---' if self.args.mode == 'CODON' else '-'
+        previous_node = None
+        node_seq_list = []
+
+        try:
+            with open(path_probs_result_10) as f_probs10, \
+                 open(path_probs_result_20) as f_probs20, \
+                 open(path_merged, 'w') as f_merged, \
+                 open(path_fasta_with_gap, 'w') as f_fasta_gap, \
+                 open(path_fasta, 'w') as f_fasta:
+
+                for line_10, line_20 in zip(f_probs10, f_probs20):
+                    if line_10.startswith('#'):
+                        continue
+
+                    cols_10 = line_10.rstrip('\n').split('\t')
+                    if line_10.startswith('Node\tSite'):
+                        f_merged.write('Node\tSite\tState\t{}\t{}\n'.format('\t'.join([p.replace('p_', '') for p in cols_10[3:]]), gap_char))
+                        previous_node = None
+                        node_seq_list = []
+                        continue
+
+                    cols_20 = line_20.rstrip('\n').split('\t')
+                    node_10, site_10, state = cols_10[0], cols_10[1], cols_10[2]
+                    node_20, site_20 = cols_20[0], cols_20[1]
+
+                    if (node_10, site_10) != (node_20, site_20):
+                        print(time_stamp(), f'{path_probs_result_10} 와 {path_probs_result_20}의 노드/사이트 ({node_10}, {site_10}) vs ({node_20}, {site_20})가 일치하지 않습니다.', file=sys.stderr, flush=True)
                         sys.exit(1)
-                else:
-                    merged.write('Node\tSite\tState\t{}\t{}\n'.format('\t'.join([p.replace('p_', '') for p in cols_10[3:]]), gap))
-                    previous_node = None
-                    node_seq = ''
-        probs_result_10.close()
-        probs_result_20.close()
-        fasta_with_gap.close()
-        fasta.close()
+
+                    if previous_node != node_10 and previous_node is not None:
+                        f_fasta_gap.write(f'>{previous_node}\n{"".join(node_seq_list)}\n')
+                        f_fasta.write(f'>{previous_node}\n{"".join(node_seq_list).replace("-", "")}\n')
+                        node_seq_list = []
+
+                    probs_str = [format(round(float(p), 4), '.5f') for p in cols_10[3:]]
+                    p_1 = float(cols_20[4])
+
+                    current_state_char = gap_char if p_1 > self.args.min_gap_prob else state
+                    f_merged.write('{}\t{}\t{}\t{}\t{:.4f}\n'.format(node_10, site_10, current_state_char, '\t'.join(probs_str), p_1))
+                    node_seq_list.append(current_state_char)
+                    previous_node = node_10
+
+                if previous_node is not None and node_seq_list:
+                    f_fasta_gap.write(f'>{previous_node}\n{"".join(node_seq_list)}\n')
+                    f_fasta.write(f'>{previous_node}\n{"".join(node_seq_list).replace("-", "")}\n')
+
+        except FileNotFoundError as e:
+            print(time_stamp(), f"오류: 파일 없음 - {e.filename}", file=sys.stderr, flush=True)
+            sys.exit(1)
+        except Exception as e:
+            print(time_stamp(), f"결과 병합 중 오류 발생: {e}", file=sys.stderr, flush=True)
+            sys.exit(1)
+
 
     def calculate_codon_prob(self):
-        print(time_stamp(),
-              'Calcurating the probability of codon...',
-              flush=True)
+        print(time_stamp(), '코돈 확률 계산 중...', flush=True)
         out_dir_30 = os.path.join(self.args.out, '30_result')
-        merged = open(f'{out_dir_30}/ancestral_state_result.tsv')
-        codon_prob = open(f'{out_dir_30}/ancestral_state_result.codon_prob.tsv', 'w')
-        for line in merged:
-            line = line.rstrip('\n')
-            cols = line.split('\t')
-            if line.startswith('Node\tSite'):
-                codon_prob.write('Node\tSite\tState\t{}\t---\n'.format('\t'.join(['{}{}{}'.format(nuc_1, nuc_2, nuc_3) for nuc_1 in ['A', 'C', 'G', 'T'] for nuc_2 in ['A', 'C', 'G', 'T'] for nuc_3 in ['A', 'C', 'G', 'T']])))
-            else:
-                site = int(cols[1])
-                if site%3 == 1:
-                    nuc_dict_1 = {nuc:float(p) for nuc, p in zip(['A', 'C', 'G', 'T'], cols[3:7])}
-                    gap_1 = float(cols[7])
-                elif site%3 == 2:
-                    nuc_dict_2 = {nuc:float(p) for nuc, p in zip(['A', 'C', 'G', 'T'], cols[3:7])}
-                    gap_2 = float(cols[7])
-                else:
-                    nuc_dict_3 = {nuc:float(p) for nuc, p in zip(['A', 'C', 'G', 'T'], cols[3:7])}
-                    gap_3 = float(cols[7])
-                    codon_probs = {'{}{}{}'.format(nuc_1, nuc_2, nuc_3):nuc_dict_1[nuc_1]*nuc_dict_2[nuc_2]*nuc_dict_3[nuc_3] for nuc_1 in ['A', 'C', 'G', 'T'] for nuc_2 in ['A', 'C', 'G', 'T'] for nuc_3 in ['A', 'C', 'G', 'T']}
-                    codon_probs['---'] = (gap_1 + gap_2 + gap_3)/3
-                    codon_sorted = sorted(codon_probs.items(),key=lambda x:x[1], reverse=True)
-                    if codon_probs['---'] >= self.args.min_gap_prob:
-                        codon_prob.write('{}\t{}\t{}\t{}\n'.format(cols[0], int(site/3), '---', '\t'.join([format(round(v, 4), '.5f') for v in codon_probs.values()])))
-                    else:
-                        codon_prob.write('{}\t{}\t{}\t{}\n'.format(cols[0], int(site/3), codon_sorted[0][0], '\t'.join([format(round(v, 4), '.5f') for v in codon_probs.values()])))
-        merged.close()
-        codon_prob.close()
-        print(time_stamp(),
-              'Calcuration of codon probabilities finished.',
-              flush=True)
+        merged_file_path = f'{out_dir_30}/ancestral_state_result.tsv'
+        codon_prob_file_path = f'{out_dir_30}/ancestral_state_result.codon_prob.tsv'
 
-    def sort_ambiguous_codon(self):
-        print(time_stamp(),
-              'Sorting ambiguous codons...',
-              flush=True)
-        if self.args.mode == 'DNA':
-            out_dir_30 = os.path.join(self.args.out, '30_result')
-            ancestral_state = open(f'{out_dir_30}/ancestral_state_result.codon_prob.tsv')
-        elif self.args.mode == 'CODON':
-            out_dir_30 = os.path.join(self.args.out, '30_result')
-            ancestral_state = open(f'{out_dir_30}/ancestral_state_result.tsv')
-        ambiguous_site = open(f'{out_dir_30}/ancestral_state_result.sort.tsv', 'w')
-        for line in ancestral_state:
-            line = line.rstrip('\n')
-            cols = line.split('\t')
-            if line.startswith('Node\tSite'):
-                codons = cols[3:]
-            else:
-                node = cols[0]
-                site = cols[1]
-                codon_probs = {codon:float(prob) for codon, prob in zip(codons, cols[3:])}
-                if codon_probs['---'] > self.args.min_gap_prob:
-                    top_codons = ['---'] + (self.args.max_report - 1)*['']
-                    top_codon_probs = [format(round(codon_probs['---'], 4), '.5f')] + (self.args.max_report - 1)*['']
-                    top_aas = ['-'] + (self.args.max_report - 1)*['']
-                    top_aa_probs = [format(round(codon_probs['---'], 4), '.5f')] + (self.args.max_report - 1)*['']
-                else:
-                    del(codon_probs['---'])
-                    aa_probs = {}
-                    for k, v in codon_probs.items():
-                        aa = Seq(k).translate()[0]
-                        if aa not in aa_probs:
-                            aa_probs[aa] = v
-                        else:
-                            aa_probs[aa] = aa_probs[aa] + v
-                    codon_sorted = sorted(codon_probs.items(),key=lambda x:x[1], reverse=True)
-                    aa_sorted = sorted(aa_probs.items(),key=lambda x:x[1], reverse=True)
-                    top_codons = [k if v > self.args.min_prob else '' for k ,v in codon_sorted][:self.args.max_report]
-                    top_codon_probs = [format(round(v, 4), '.5f') if v > self.args.min_prob else '' for k, v in codon_sorted][:self.args.max_report]
-                    top_aas = [k if v > self.args.min_prob else '' for k ,v in aa_sorted][:self.args.max_report]
-                    top_aa_probs = [format(round(v, 4), '.5f') if v > self.args.min_prob else '' for k, v in aa_sorted][:self.args.max_report]
-                ambiguous_site.write('{}\t{}\t{}\t{}\t{}\t{}\n'.format(node, site, '\t'.join(top_codons), '\t'.join(top_codon_probs), '\t'.join(top_aas), '\t'.join(top_aa_probs)))
-        ancestral_state.close()
-        ambiguous_site.close()
-        print(time_stamp(),
-              'Ambiguous codons were sorted.',
-              flush=True)
+        from itertools import product # itertools import 추가
+        nucleotides = ['A', 'C', 'G', 'T']
+        all_codons = [''.join(c) for c in product(nucleotides, repeat=3)] # product 사용
 
-    def sort_ambiguous_aa(self):
-        print(time_stamp(),
-              'Sorting ambiguous amino acids...',
-              flush=True)
+        try:
+            with open(merged_file_path) as merged_file, open(codon_prob_file_path, 'w') as codon_prob_file:
+                header = merged_file.readline().rstrip('\n').split('\t')
+                # Correctly extract nucleotide probability headers (e.g., A, C, G, T)
+                # This assumes the order in merged_file is always A, C, G, T, followed by gap prob
+                nuc_prob_headers = header[3:7]
+
+
+                codon_prob_file.write(f"Node\tSite\tState\t{'\t'.join(all_codons)}\t---\n")
+
+                nuc_dicts = [{}, {}, {}] # Store nucleotide probabilities for a codon
+                gap_probs = [0.0, 0.0, 0.0] # Store gap probabilities for a codon
+
+                for line in merged_file:
+                    line = line.rstrip('\n')
+                    cols = line.split('\t')
+
+                    node, site_str, state_from_merged = cols[0], cols[1], cols[2]
+                    site = int(site_str)
+                    pos_in_codon = (site -1) % 3 # 0, 1, or 2
+
+                    # Store probabilities for the current nucleotide position
+                    # Ensure columns 3-7 contain A, C, G, T probabilities and column 7 is gap
+                    current_nuc_probs = {nuc: float(p) for nuc, p in zip(nuc_prob_headers, cols[3:7])}
+                    nuc_dicts[pos_in_codon] = current_nuc_probs
+                    gap_probs[pos_in_codon] = float(cols[7])
+
+                    if pos_in_codon == 2: # End of a codon
+                        codon_probs_calculated = {
+                            codon: nuc_dicts[0].get(codon[0],0) * nuc_dicts[1].get(codon[1],0) * nuc_dicts[2].get(codon[2],0)
+                            for codon in all_codons
+                        }
+                        # Ensure all_codons are present, default to 0 if a nucleotide was missing (e.g. from a gap in previous position)
+                        for c in all_codons:
+                            if c not in codon_probs_calculated:
+                                codon_probs_calculated[c] = 0.0
+
+                        codon_probs_calculated['---'] = sum(gap_probs) / 3.0
+
+                        prob_values_str_list = []
+                        for c in all_codons: # Use defined order
+                            prob_values_str_list.append(format(round(codon_probs_calculated.get(c, 0.0), 5), '.5f')) # Use .get for safety
+                        prob_values_str_list.append(format(round(codon_probs_calculated.get('---',0.0), 5), '.5f'))
+
+
+                        sorted_codon_probs = sorted(
+                            [(codon, prob) for codon, prob in codon_probs_calculated.items() if codon != '---'],
+                            key=lambda x: x[1],
+                            reverse=True
+                        )
+
+                        display_state = '---' if codon_probs_calculated['---'] >= self.args.min_gap_prob else (sorted_codon_probs[0][0] if sorted_codon_probs else 'NNN')
+
+                        codon_prob_file.write(f"{node}\t{int(site/3)+1}\t{display_state}\t{'\t'.join(prob_values_str_list)}\n")
+                        nuc_dicts = [{}, {}, {}]
+                        gap_probs = [0.0, 0.0, 0.0]
+
+        except FileNotFoundError as e:
+            print(time_stamp(), f"오류: 파일 없음 - {e.filename}", file=sys.stderr, flush=True)
+            sys.exit(1)
+        except Exception as e:
+            print(time_stamp(), f"코돈 확률 계산 중 오류 발생: {e} (Line: {sys.exc_info()[-1].tb_lineno})", file=sys.stderr, flush=True)
+            sys.exit(1)
+
+        print(time_stamp(), '코돈 확률 계산이 완료되었습니다.', flush=True)
+
+    def _get_top_states(self, probs_dict, max_report, min_report_prob, is_codon_mode, min_gap_threshold):
+        """Helper function to get top states (codons or AAs) based on probabilities."""
+        gap_char = '---' if is_codon_mode else '-'
+
+        if probs_dict.get(gap_char, 0.0) >= min_gap_threshold:
+            top_states = [gap_char] + (max_report - 1) * ['']
+            top_state_probs_str = [format(round(probs_dict.get(gap_char, 0.0), 5), '.5f')] + \
+                                  (max_report - 1) * ['']
+            if is_codon_mode:
+                top_aas = ['-'] + (max_report - 1) * ['']
+                top_aa_probs_str = [format(round(probs_dict.get(gap_char, 0.0), 5), '.5f')] + \
+                                   (max_report - 1) * ['']
+        else:
+            # Remove gap for sorting if it exists and is below threshold
+            filtered_probs = {k: v for k, v in probs_dict.items() if k != gap_char}
+
+            sorted_states = sorted(filtered_probs.items(), key=lambda x: x[1], reverse=True)
+
+            top_states = [k if v >= min_report_prob else '' for k, v in sorted_states][:max_report]
+            top_states.extend([''] * (max_report - len(top_states))) # Ensure list has max_report elements
+
+            top_state_probs_str = [format(round(v, 5), '.5f') if v >= min_report_prob else '' for _, v in sorted_states][:max_report]
+            top_state_probs_str.extend([''] * (max_report - len(top_state_probs_str)))
+
+            if is_codon_mode:
+                aa_probs = {}
+                for codon, prob in filtered_probs.items(): # Use filtered_probs
+                    try:
+                        # Ensure Seq object is created correctly for translation
+                        aa = str(Seq(codon).translate(to_stop=True)) # Use to_stop=True to handle stop codons as '*'
+                        if aa == '*': aa = '-' # Or however you want to represent stop codons as AA
+                    except Exception:
+                        aa = 'X' # Represent unknown translation as 'X'
+                    aa_probs[aa] = aa_probs.get(aa, 0.0) + prob
+
+                sorted_aas = sorted(aa_probs.items(), key=lambda x: x[1], reverse=True)
+                top_aas = [k if v >= min_report_prob else '' for k, v in sorted_aas][:max_report]
+                top_aas.extend([''] * (max_report - len(top_aas)))
+
+                top_aa_probs_str = [format(round(v, 5), '.5f') if v >= min_report_prob else '' for _, v in sorted_aas][:max_report]
+                top_aa_probs_str.extend([''] * (max_report - len(top_aa_probs_str)))
+
+        return (top_states, top_state_probs_str, top_aas, top_aa_probs_str) if is_codon_mode else (top_states, top_state_probs_str)
+
+
+    def sort_ambiguous_states(self):
+        """Sorts ambiguous codons or amino acids based on mode and writes to a TSV file."""
+        is_codon_mode = self.args.mode in ['DNA', 'CODON']
+        mode_specific_message = '코돈' if is_codon_mode else '아미노산'
+        print(time_stamp(), f"모호한 {mode_specific_message} 정렬 중...", flush=True)
+
         out_dir_30 = os.path.join(self.args.out, '30_result')
-        ancestral_state = open(f'{out_dir_30}/ancestral_state_result.tsv')
-        ambiguous_site = open(f'{out_dir_30}/ancestral_state_result.sort.tsv', 'w')
-        for line in ancestral_state:
-            line = line.rstrip('\n')
-            cols = line.split('\t')
-            if line.startswith('Node\tSite'):
-                aas = cols[3:]
-            else:
-                node = cols[0]
-                site = cols[1]
-                aa_probs = {aa:float(prob) for aa, prob in zip(aas, cols[3:])}
-                if aa_probs['-'] > self.args.min_gap_prob:
-                    top_aas = ['-'] + (self.args.max_report - 1)*['']
-                    top_aa_probs = [format(round(aa_probs['-'], 4), '.5f')] + (self.args.max_report - 1)*['']
-                else:
-                    del(aa_probs['-'])
-                    aa_sorted = sorted(aa_probs.items(),key=lambda x:x[1], reverse=True)
-                    top_aas = [k if v > self.args.min_prob else '' for k ,v in aa_sorted][:self.args.max_report]
-                    top_aa_probs = [format(round(v, 4), '.5f') if v > self.args.min_prob else '' for k, v in aa_sorted][:self.args.max_report]
-                ambiguous_site.write('{}\t{}\t{}\t{}\n'.format(node, site, '\t'.join(top_aas), '\t'.join(top_aa_probs)))
-        ancestral_state.close()
-        ambiguous_site.close()
-        print(time_stamp(),
-              'Ambiguous amino acids were sorted.',
-              flush=True)
         
+        if self.args.mode == 'DNA':
+            input_file_path = f"{out_dir_30}/ancestral_state_result.codon_prob.tsv"
+        elif self.args.mode == 'CODON' or self.args.mode == 'AA':
+             input_file_path = f"{out_dir_30}/ancestral_state_result.tsv"
+        else:
+            print(time_stamp(), f"sort_ambiguous_states: 지원되지 않는 모드 {self.args.mode}", file=sys.stderr, flush=True)
+            return
+
+        output_file_path = f"{out_dir_30}/ancestral_state_result.sort.tsv"
+
+        try:
+            with open(input_file_path) as infile, open(output_file_path, 'w') as outfile:
+                header_line = infile.readline().rstrip('\n')
+                header_cols = header_line.split('\t')
+
+                # Determine state keys from header (e.g. AAA, AAC ... or A, C, D ...)
+                # For codon_prob.tsv, states are from col 3 up to (but not including) the last '---' col
+                # For ancestral_state_result.tsv (CODON/AA), states are from col 3 up to the last col (gap prob)
+                if self.args.mode == 'DNA': # Reading from ancestral_state_result.codon_prob.tsv
+                    # Header: Node Site State <codon1> <codon2> ... <codon64> ---
+                    state_keys = header_cols[3:-1] # All codons
+                else: # Reading from ancestral_state_result.tsv (for CODON or AA)
+                    # Header: Node Site State <state1> <state2> ... <stateN> <gap_char>
+                    state_keys = header_cols[3:-1] # All AAs or Codons
+
+                gap_key_in_header = header_cols[-1] # This should be '---' or '-'
+
+                for line in infile:
+                    cols = line.rstrip('\n').split('\t')
+                    node, site_val_str = cols[0], cols[1]
+
+                    # Create dictionary of state -> probability
+                    current_probs = {key: float(val) for key, val in zip(state_keys, cols[3:3+len(state_keys)])}
+                    # Add gap probability
+                    current_probs[gap_key_in_header] = float(cols[-1])
+
+
+                    if is_codon_mode: # CODON or DNA mode
+                        top_codons, top_codon_probs_str, top_aas, top_aa_probs_str = self._get_top_states(
+                            current_probs, self.args.max_report, self.args.min_prob, True, self.args.min_gap_prob
+                        )
+                        outfile.write(f"{node}\t{site_val_str}\t{'\t'.join(top_codons)}\t{'\t'.join(top_codon_probs_str)}\t{'\t'.join(top_aas)}\t{'\t'.join(top_aa_probs_str)}\n")
+                    else: # AA mode
+                        top_aas_list, top_aa_probs_str_list = self._get_top_states(
+                            current_probs, self.args.max_report, self.args.min_prob, False, self.args.min_gap_prob
+                        )
+                        outfile.write(f"{node}\t{site_val_str}\t{'\t'.join(top_aas_list)}\t{'\t'.join(top_aa_probs_str_list)}\n")
+
+        except FileNotFoundError:
+            print(time_stamp(), f"오류: 입력 파일 없음 - {input_file_path}", file=sys.stderr, flush=True)
+            sys.exit(1)
+        except Exception as e:
+            print(time_stamp(), f"모호한 상태 정렬 중 오류 발생: {e} (Line: {sys.exc_info()[-1].tb_lineno})", file=sys.stderr, flush=True)
+
+            sys.exit(1)
+
+        print(time_stamp(), f"모호한 {mode_specific_message}이(가) 정렬되었습니다.", flush=True)
+
     def copy_treefile(self):
         out_dir_10 = os.path.join(self.args.out, '10_asr')
         out_dir_30 = os.path.join(self.args.out, '30_result')
@@ -381,40 +463,59 @@ class ancseq(object):
             os.remove(f'{marged_prefix}.codon_prob.tsv')
 
     def run(self):
-        print(time_stamp(), 'Start to run ancseq.', flush=True)
+        print(time_stamp(), 'ancseq 실행 시작.', flush=True)
         os.mkdir(self.args.out)
         if self.args.asr_only:
             print(time_stamp(),
-                  'Skipped building tree.',
+                  '계통수 구축을 건너뛰었습니다.',
                   flush=True)
             out_dir_00 = os.path.join(self.args.out, '00_tree')
-            seq = os.path.join(out_dir_00, os.path.basename(self.args.seq))
-            os.mkdir(out_dir_00)
-            shutil.copyfile(self.args.seq, seq)
-            shutil.copyfile(f'{self.args.seq}.treefile', f'{seq}.treefile')
-            if os.path.isfile(f'{self.args.seq}.log'):
-                shutil.copyfile(f'{self.args.seq}.log', f'{seq}.log')
+            # Ensure 00_tree directory exists
+            os.makedirs(out_dir_00, exist_ok=True)
+            seq_target_path = os.path.join(out_dir_00, os.path.basename(self.args.seq))
+            shutil.copyfile(self.args.seq, seq_target_path)
+
+            # Check if source treefile exists before copying
+            source_treefile = f'{self.args.seq}.treefile'
+            if os.path.isfile(source_treefile):
+                shutil.copyfile(source_treefile, f'{seq_target_path}.treefile')
+            else:
+                print(time_stamp(), f"경고: --asr-only가 지정되었지만, 원본 트리 파일({source_treefile})을 찾을 수 없습니다.", file=sys.stderr, flush=True)
+
+            source_logfile = f'{self.args.seq}.log'
+            if os.path.isfile(source_logfile): # Check if source logfile exists
+                shutil.copyfile(source_logfile, f'{seq_target_path}.log')
         else:
             self.built_tree()
-        if self.args.model == 'MFP' and os.path.isfile(f'{self.args.out}/00_tree/{self.args.seq}.log'):
+
+        # Check best model only if tree was built or log file was copied
+        potential_log_file = os.path.join(self.args.out, '00_tree', f'{os.path.basename(self.args.seq)}.log')
+        if self.args.model == 'MFP' and os.path.isfile(potential_log_file):
             self.check_best_model()
+
         self.reconstruct_ancestral_state()
         self.reconstruct_indels()
         self.merge_results()
+
         if self.args.mode == 'DNA' and not self.args.stop_codon_prob:
             self.calculate_codon_prob()
-            self.sort_ambiguous_codon()
+            self.sort_ambiguous_states() # 통합된 함수 호출
         elif self.args.mode == 'CODON':
-            self.sort_ambiguous_codon()
-        else:
-            self.sort_ambiguous_aa()
+            self.sort_ambiguous_states() # 통합된 함수 호출
+        elif self.args.mode == 'AA':
+            self.sort_ambiguous_states() # 통합된 함수 호출
+
         self.copy_treefile()
         self.gzip_table()
-        print(time_stamp(), 'ancseq successfully finished!', flush=True)
+        print(time_stamp(), 'ancseq가 성공적으로 완료되었습니다!', flush=True)
 
 
 def main():
-    ancseq(args).run()
+    # pm and args are already defined at the top level
+    # No, they should be inside main or passed if ancseq is a reusable class outside this script context.
+    # For this script, current setup is fine as it's the main entry point.
+    ancseq_runner = ancseq(args)
+    ancseq_runner.run()
 
 if __name__ == '__main__':
     main()

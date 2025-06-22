@@ -5,7 +5,7 @@ from ancseq.__init__ import __version__
 
 setup(name='ancseq',
       version='{}'.format(__version__),
-      description='ancseq : IQ-TREE Wrapper for Ancestral Sequence Reconstruction',
+      description='ancseq: 조상 서열 재구축을 위한 IQ-TREE 래퍼',
       author='Yu Sugihara',
       author_email='sugihara.yu.85s@kyoto-u.jp',
       url='https://github.com/YuSugihara/ancseq',
